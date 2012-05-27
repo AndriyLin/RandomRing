@@ -4,7 +4,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
-import android.util.Log;
 
 public class RRPhoneStateListener extends PhoneStateListener {
 
@@ -25,7 +24,6 @@ public class RRPhoneStateListener extends PhoneStateListener {
 		super.onCallStateChanged(state, incomingNumber);
 		
 		if (state == TelephonyManager.CALL_STATE_RINGING) {
-			Log.i("__ANDRIY__", "call state changed: RINGING");
 			Message msg = Message.obtain(handler, RandomRingActivity.RINGTONE_SHOULD_CHANGE);
 			msg.sendToTarget();
 		}
