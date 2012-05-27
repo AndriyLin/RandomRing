@@ -7,9 +7,13 @@ import java.util.Random;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.AlertDialog.Builder;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -34,9 +38,13 @@ import android.widget.TextView;
 public class RandomRingActivity extends Activity {
     
     private static final int PICK_RINGTONE_REQUEST = 1;
+    
+    private static final int NOTIFICATION_ID = 1;
 
     public static final int RINGTONE_LIST_REFRESH = 1;
     public static final int RINGTONE_SHOULD_CHANGE = 2;
+    public static final int RINGTONE_RANDOM_ON = 3;
+    public static final int RINGTONE_RANDOM_OFF = 4;
     
     private Handler handler;
     private final Random random = new Random();
@@ -57,6 +65,8 @@ public class RandomRingActivity extends Activity {
         
 		RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this, handler);
 		util.registerListener();
+		
+		this.showNotification(true);
     }
     
     /**
@@ -159,10 +169,32 @@ public class RandomRingActivity extends Activity {
 	protected void onDestroy() {
 		RingtoneUtil util = new RingtoneUtil(this, handler);
 		util.unregisterListener();
+		this.showNotification(false);
 
 		super.onDestroy();
 	}
 
+	/**
+	 * 当随机切换功能开启或关闭的时候，通知栏告诉
+	 * @param on 开启？
+	 */
+	private void showNotification(boolean on) {
+		NotificationManager nm = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+		Resources resources = this.getResources();
+
+		CharSequence text = resources.getString(R.string.random_service)
+				+ resources.getString(on ? R.string.random_on : R.string.random_off);
+		int icon = on ? R.drawable.correct : R.drawable.incorrect;
+		Notification notification = new Notification(icon, text, System.currentTimeMillis());
+		CharSequence contentTitle = resources.getString(R.string.random_service);
+		CharSequence contentText = resources.getString(on ? R.string.random_on : R.string.random_off);
+
+		Intent notificationIntent = new Intent(this, RandomRingActivity.class);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, 	notificationIntent, 0);
+		notification.setLatestEventInfo(this, contentTitle, contentText,	contentIntent);
+		
+		nm.notify(NOTIFICATION_ID, notification);
+	}
 
 	/**
 	 * 用于ListView的adapter
@@ -229,7 +261,7 @@ public class RandomRingActivity extends Activity {
 						//选取铃声
 						Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
 						intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE);
-						intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "添加到铃声库中");
+						intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "添加");
 						RandomRingActivity.this.startActivityForResult(intent, PICK_RINGTONE_REQUEST);
 						//接下来就是在onActivityResult()里接收判定了
 					}
@@ -251,7 +283,7 @@ public class RandomRingActivity extends Activity {
 				RandomRingActivity.this.refreshRingtoneList();
 				return true;
 			}
-			else if (msg.what == RINGTONE_SHOULD_CHANGE) {
+			if (msg.what == RINGTONE_SHOULD_CHANGE) {
 				RandomRingActivity.this.changeRingtone();
 				return true;
 			}
