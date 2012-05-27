@@ -1,5 +1,8 @@
 package edu.tongji.andriylin;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
@@ -12,9 +15,68 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 public class RRDBManager {
 
+	/*
+	 * singleton
+	 */
+	private RRDBManager() {}
+	private static RRDBManager instance = null;
+	public static synchronized RRDBManager get() {
+		if (instance == null) {
+			instance = new RRDBManager();
+		}
+		return instance;
+	}
 	
+	/**
+	 * insert一个铃声，存储name和uri
+	 * @param context
+	 * @param name
+	 * @param uri
+	 */
+	public synchronized void insertRingtone(Context context, String name, String uri) {
+		RingtonesHelper helper = new RingtonesHelper(context);
+		if (helper.contains(name)) {
+			helper.update(name, uri);
+		}
+		else {
+			helper.insert(name, uri);
+		}
+	}
+	
+	/**
+	 * delete 一个铃声，根据其name
+	 * @param context
+	 * @param name
+	 */
+	public synchronized void deleteRingtone(Context context, String name) {
+		RingtonesHelper helper = new RingtonesHelper(context);
+		helper.delete(name);
+	}
+	
+	/**
+	 * 获取全部的ringtone_name + ringtone_uri
+	 * @param context
+	 * @return Map<Name, Uri>
+	 */
+	public synchronized Map<String, String> getSongListFromDB(Context context) {
+		RingtonesHelper helper = new RingtonesHelper(context);
+		Cursor cursor = helper.selectAll();
+		cursor.moveToFirst();
+
+		HashMap<String, String> ringtones = new HashMap<String, String>();
+		for (int i = 0; i < cursor.getCount(); i++) {
+			ringtones.put(cursor.getString(1), cursor.getString(2));
+			cursor.moveToNext();
+		}
+		return ringtones;
+	}
+
+	/**
+	 * 对于ringtone们的SQLite的helper类
+	 * @author Andriy
+	 */
 	private class RingtonesHelper extends SQLiteOpenHelper {
-		private static final String DB_NAME = "ringtones_andriy_db";
+		private static final String DB_NAME = "ringtones_andriylin_db";
 		private static final int DB_VERSION = 1;
 		private static final String TABLE_NAME = "ringtones_list_table";
 		private static final String FIELD_ID = "_id";
@@ -57,24 +119,32 @@ public class RRDBManager {
 			return cursor;
 		}
 		
-		public void delete(int id) {
+		public void delete(String name) {
 			SQLiteDatabase db = this.getWritableDatabase();
-			String where = FIELD_ID + " = ?";
-			String[] whereValue = {Integer.toString(id)};
-			
+			String where = FIELD_NAME + " = ?";
+			String[] whereValue = {name};
 			db.delete(TABLE_NAME, where, whereValue);
 		}
 		
-		public void update (int id, String name, String uri) {
+		public boolean contains(String name) {
+			SQLiteDatabase db = this.getReadableDatabase();
+			String[] columns = {FIELD_ID};
+			String where = FIELD_NAME + " = ?";
+			String[] args = {name};
+			Cursor cursor = db.query(TABLE_NAME, columns, where, args, null, null, null);
+			return cursor.getCount() != 0;
+		}
+		
+		public void update(String name, String uri) {
 			SQLiteDatabase db = this.getWritableDatabase();
-			String where = FIELD_ID + " = ?";
-			String[] whereValue = {Integer.toString(id)};
+			String where = FIELD_NAME + " = ?";
+			String[] args = {name};
 			
 			ContentValues cv = new ContentValues();
-			cv.put(FIELD_NAME, name);
 			cv.put(FIELD_URI, uri);
-
-			db.update(TABLE_NAME, cv, where, whereValue);
+			
+			db.update(TABLE_NAME, cv, where, args);
 		}
 	}
+	
 }
