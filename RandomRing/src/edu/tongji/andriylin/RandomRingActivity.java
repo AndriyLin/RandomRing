@@ -23,7 +23,6 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -39,20 +38,17 @@ public class RandomRingActivity extends Activity {
     public static final int RINGTONE_LIST_REFRESH = 1;
     public static final int RINGTONE_SHOULD_CHANGE = 2;
     
-    private RRSettings settings;
     private Handler handler;
+    private final Random random = new Random();
     
     private ListView ringtoneListView; 
-
-    private Button testButton;
     
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
-        settings = new RRSettings(this.getPreferences(MODE_PRIVATE));
+
         handler = new Handler(new RRCallback());
         
         ringtoneListView = (ListView) findViewById(R.id.ringtoneListView);
@@ -61,14 +57,6 @@ public class RandomRingActivity extends Activity {
         
 		RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this, handler);
 		util.registerListener();
-
-        testButton = (Button) findViewById(R.id.button1);
-        testButton.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-			}
-		});
     }
     
     /**
@@ -114,7 +102,7 @@ public class RandomRingActivity extends Activity {
 			return;
 		}
 
-		int pos = new Random().nextInt(map.size());
+		int pos = random.nextInt(map.size());
 		int i = 0;
 		String uriString = null;
 		for (String s : map.keySet()) {
@@ -217,8 +205,9 @@ public class RandomRingActivity extends Activity {
 				//正常的一个item
 				convertView = LayoutInflater.from(context).inflate(R.layout.ringtone_item, null);
 				TextView nameText = (TextView) convertView.findViewById(R.id.ringtone_name);
-				ImageView deleteImage = (ImageView) convertView.findViewById(R.id.deleteImage);
 				nameText.setText(ringtones.get(position));
+
+				ImageView deleteImage = (ImageView) convertView.findViewById(R.id.deleteImage);
 				deleteImage.setOnClickListener(new OnClickListener() {
 					
 					@Override
