@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Random;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.Intent;
 import android.media.RingtoneManager;
@@ -15,6 +17,8 @@ import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -55,13 +59,14 @@ public class RandomRingActivity extends Activity {
         Message msg = Message.obtain(handler, RINGTONE_LIST_REFRESH);
         msg.sendToTarget();
         
+		RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this, handler);
+		util.registerListener();
+
         testButton = (Button) findViewById(R.id.button1);
         testButton.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this, handler);
-				util.registerListener();
 			}
 		});
     }
@@ -124,7 +129,53 @@ public class RandomRingActivity extends Activity {
 		RingtoneUtil util = new RingtoneUtil(this, handler);
 		util.setRingtone(uri);
 	}
-    
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		this.getMenuInflater().inflate(R.menu.basic_menu, menu);
+		return true;
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case R.id.about_item:
+			 // 展示about信息
+			AlertDialog.Builder builder = new Builder(this);
+			builder.setTitle(R.string.about_text);
+			builder.setMessage(R.string.about_content);
+			builder.create().show();
+			return true;
+
+		case R.id.quit_item:
+			this.finish();
+			return true;
+
+		default:
+			return false;
+		}
+	}
+
+
+	@Override
+	public void onBackPressed() {
+		//后退不退出，回到主屏幕
+		Intent toHome = new Intent(Intent.ACTION_MAIN);
+		toHome.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+		toHome.addCategory(Intent.CATEGORY_HOME);
+		startActivity(toHome);
+	}
+
+
+	@Override
+	protected void onDestroy() {
+		RingtoneUtil util = new RingtoneUtil(this, handler);
+		util.unregisterListener();
+
+		super.onDestroy();
+	}
+
+
 	/**
 	 * 用于ListView的adapter
 	 * @author Andriy

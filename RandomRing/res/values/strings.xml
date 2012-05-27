@@ -3,5 +3,8 @@
 
     <string name="hello">Hello World, RandomRingActivity!</string>
     <string name="app_name">RandomRing</string>
+    <string name="about_text">关于</string>
+    <string name="quit_text">退出</string>
+    <string name="about_content">随机铃声切换——by Andriy ( weibo.com/andriylin )</string>
 
 </resources>
