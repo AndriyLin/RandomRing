@@ -20,12 +20,16 @@ public class RandomRingActivity extends Activity {
     private Button testButton2;
     
     private static final int PICK_RINGTONE_REQUEST = 1;
+    
+    private RRSettings settings;
 
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        
+        settings = new RRSettings(this.getPreferences(MODE_PRIVATE));
         
         testButton1 = (Button) findViewById(R.id.button1);
         testButton2 = (Button) findViewById(R.id.button2);
