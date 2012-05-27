@@ -3,6 +3,7 @@ package edu.tongji.andriylin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import android.app.Activity;
 import android.content.Context;
@@ -13,11 +14,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -29,13 +32,18 @@ import android.widget.TextView;
 public class RandomRingActivity extends Activity {
     
     private static final int PICK_RINGTONE_REQUEST = 1;
-    private static final int RINGTONE_LIST_REFRESH = 1;
+
+    public static final int RINGTONE_LIST_REFRESH = 1;
+    public static final int RINGTONE_SHOULD_CHANGE = 2;
     
     private RRSettings settings;
     private Handler handler;
     
     private ListView ringtoneListView; 
 
+    private Button testButton;
+    private Button testButton2;
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -48,6 +56,25 @@ public class RandomRingActivity extends Activity {
         ringtoneListView = (ListView) findViewById(R.id.ringtoneListView);
         Message msg = Message.obtain(handler, RINGTONE_LIST_REFRESH);
         msg.sendToTarget();
+        
+        testButton = (Button) findViewById(R.id.button1);
+        testButton.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this, handler);
+				util.registerListener();
+			}
+		});
+        testButton2 = (Button) findViewById(R.id.button2);
+        testButton2.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this, handler);
+				util.unregisterListener();
+			}
+		});
     }
     
     /**
@@ -68,7 +95,7 @@ public class RandomRingActivity extends Activity {
 		if (requestCode == PICK_RINGTONE_REQUEST) {
 			if (resultCode == RESULT_OK) {
 				Uri uri = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
-				RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this);
+				RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this, handler);
 				RRDBManager.get().insertRingtone(RandomRingActivity.this, util.getTitleByUri(uri), uri.toString());
 				
 				Message msg = Message.obtain(handler, RINGTONE_LIST_REFRESH);
@@ -77,6 +104,37 @@ public class RandomRingActivity extends Activity {
 			return;
 		}
 		super.onActivityResult(requestCode, resultCode, data);
+	}
+	
+	/**
+	 * Ëæ»ú±ä»»ÁåÉù
+	 */
+	private void changeRingtone() {
+		Log.i("__ANDRIY__", "about to change ringtone");
+
+		Map<String, String>map = RRDBManager.get().getRingtones(RandomRingActivity.this);
+		if (map.size() == 0) {
+			Log.i("__ANDRIY__", "nothing to random");
+			return;
+		}
+
+		int pos = new Random().nextInt(map.size());
+		int i = 0;
+		String uriString = null;
+		for (String s : map.keySet()) {
+			if (i == pos) {
+				uriString = map.get(s);
+				Log.i("__ANDRIY__", "randomed, got " + s + " : " + uriString);
+				break;
+			}
+			i++;
+		}
+
+		Uri uri = Uri.parse(uriString);
+		RingtoneUtil util = new RingtoneUtil(this, handler);
+		util.setRingtone(uri);
+		
+		Log.i("__ANDRIY__", "new ringtone set");
 	}
     
 	/**
@@ -163,6 +221,10 @@ public class RandomRingActivity extends Activity {
 		public boolean handleMessage(Message msg) {
 			if (msg.what == RINGTONE_LIST_REFRESH) {
 				RandomRingActivity.this.refreshRingtoneList();
+				return true;
+			}
+			else if (msg.what == RINGTONE_SHOULD_CHANGE) {
+				RandomRingActivity.this.changeRingtone();
 				return true;
 			}
 			

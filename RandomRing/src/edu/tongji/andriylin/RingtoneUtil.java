@@ -4,6 +4,9 @@ import android.content.Context;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.os.Handler;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 
 /**
  * 与ringtone相关的设置
@@ -12,13 +15,10 @@ import android.net.Uri;
 public class RingtoneUtil {
 	
 	private final Context context;
-	public RingtoneUtil(Context aContext) {
+	private final Handler handler;
+	public RingtoneUtil(Context aContext, Handler aHandler) {
 		this.context = aContext;
-	}
-	
-	public String getDefaultRingtoneTitle() {
-		Uri uri = RingtoneManager.getActualDefaultRingtoneUri(this.context, RingtoneManager.TYPE_RINGTONE);
-		return this.getTitleByUri(uri);
+		this.handler = aHandler;
 	}
 	
 	/**
@@ -37,4 +37,15 @@ public class RingtoneUtil {
 	public void setRingtone(Uri uri) {
 		RingtoneManager.setActualDefaultRingtoneUri(this.context, RingtoneManager.TYPE_RINGTONE, uri);			
 	}
+	
+	public void registerListener() {
+		TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+		tm.listen(RRPhoneStateListener.get(handler), PhoneStateListener.LISTEN_CALL_STATE);
+	}
+	
+	public void unregisterListener() {
+		TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+		tm.listen(RRPhoneStateListener.get(handler), PhoneStateListener.LISTEN_NONE);
+	}
+	
 }
