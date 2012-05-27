@@ -18,6 +18,15 @@ public class RingtoneUtil {
 	
 	public String getDefaultRingtoneTitle() {
 		Uri uri = RingtoneManager.getActualDefaultRingtoneUri(this.context, RingtoneManager.TYPE_RINGTONE);
+		return this.getTitleByUri(uri);
+	}
+	
+	/**
+	 * 根据uri获取其title
+	 * @param uri
+	 * @return
+	 */
+	public String getTitleByUri(Uri uri) {
 		Ringtone ringtone = RingtoneManager.getRingtone(this.context, uri);
 		return ringtone.getTitle(this.context);
 	}

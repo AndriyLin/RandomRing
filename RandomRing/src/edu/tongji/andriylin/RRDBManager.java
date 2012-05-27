@@ -58,7 +58,7 @@ public class RRDBManager {
 	 * @param context
 	 * @return Map<Name, Uri>
 	 */
-	public synchronized Map<String, String> getSongListFromDB(Context context) {
+	public synchronized Map<String, String> getRingtones(Context context) {
 		RingtonesHelper helper = new RingtonesHelper(context);
 		Cursor cursor = helper.selectAll();
 		cursor.moveToFirst();
