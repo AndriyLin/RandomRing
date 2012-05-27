@@ -60,15 +60,7 @@ public class RRDBManager {
 	 */
 	public synchronized Map<String, String> getRingtones(Context context) {
 		RingtonesHelper helper = new RingtonesHelper(context);
-		Cursor cursor = helper.selectAll();
-		cursor.moveToFirst();
-
-		HashMap<String, String> ringtones = new HashMap<String, String>();
-		for (int i = 0; i < cursor.getCount(); i++) {
-			ringtones.put(cursor.getString(1), cursor.getString(2));
-			cursor.moveToNext();
-		}
-		return ringtones;
+		return helper.selectAll();
 	}
 
 	/**
@@ -110,13 +102,23 @@ public class RRDBManager {
 			cv.put(FIELD_URI, uri);
 
 			long row = db.insert(TABLE_NAME, null, cv);
+			db.close();
 			return row;
 		}
 		
-		public Cursor selectAll() {
+		public Map<String, String> selectAll() {
 			SQLiteDatabase db = this.getReadableDatabase();
 			Cursor cursor = db.query(TABLE_NAME, null, null, null, null, null, null);
-			return cursor;
+			cursor.moveToFirst();
+
+			HashMap<String, String> ringtones = new HashMap<String, String>();
+			for (int i = 0; i < cursor.getCount(); i++) {
+				ringtones.put(cursor.getString(1), cursor.getString(2));
+				cursor.moveToNext();
+			}
+
+			db.close();
+			return ringtones;
 		}
 		
 		public void delete(String name) {
@@ -124,6 +126,7 @@ public class RRDBManager {
 			String where = FIELD_NAME + " = ?";
 			String[] whereValue = {name};
 			db.delete(TABLE_NAME, where, whereValue);
+			db.close();
 		}
 		
 		public boolean contains(String name) {
@@ -132,7 +135,10 @@ public class RRDBManager {
 			String where = FIELD_NAME + " = ?";
 			String[] args = {name};
 			Cursor cursor = db.query(TABLE_NAME, columns, where, args, null, null, null);
-			return cursor.getCount() != 0;
+			boolean isContained =cursor.getCount() != 0; 
+
+			db.close();
+			return isContained;
 		}
 		
 		public void update(String name, String uri) {
@@ -144,6 +150,7 @@ public class RRDBManager {
 			cv.put(FIELD_URI, uri);
 			
 			db.update(TABLE_NAME, cv, where, args);
+			db.close();
 		}
 	}
 	
