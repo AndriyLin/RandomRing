@@ -22,6 +22,15 @@ public class RingtoneUtil {
 	}
 	
 	/**
+	 * 得到当前的铃声title
+	 * @return
+	 */
+	public String getCurrentRingtoneTitle() {
+		return this.getTitleByUri(RingtoneManager.getActualDefaultRingtoneUri(
+				context, RingtoneManager.TYPE_RINGTONE));
+	}
+	
+	/**
 	 * 根据uri获取其title
 	 * @param uri
 	 * @return

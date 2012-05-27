@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Handler.Callback;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -111,21 +112,25 @@ public class RandomRingActivity extends Activity {
 		if (map.size() == 0) {
 			return;
 		}
+		RingtoneUtil util = new RingtoneUtil(this, handler);
+		Log.i("__ANDRIY__", "before: " + util.getCurrentRingtoneTitle());
 
 		int pos = random.nextInt(map.size());
+		Log.i("__ANDRIY__", "random: " + pos + " / " + map.size());
 		int i = 0;
 		String uriString = null;
 		for (String s : map.keySet()) {
 			if (i == pos) {
 				uriString = map.get(s);
+				Log.i("__ANDRIY__", "going to set: " + s);
 				break;
 			}
 			i++;
 		}
 
 		Uri uri = Uri.parse(uriString);
-		RingtoneUtil util = new RingtoneUtil(this, handler);
 		util.setRingtone(uri);
+		Log.i("__ANDRIY", "after: " + util.getCurrentRingtoneTitle());
 	}
 	
 	@Override
