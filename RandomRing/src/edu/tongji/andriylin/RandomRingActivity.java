@@ -5,8 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.Intent;
 import android.media.RingtoneManager;
@@ -20,25 +18,17 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 /**
  * 主界面activity
  * @author Andriy
  */
 public class RandomRingActivity extends Activity {
-
-    private Button testButton1;
-    private Button testButton2;
-    private Button testButton3;
-    private Button testButton4;
     
     private static final int PICK_RINGTONE_REQUEST = 1;
-    
     private static final int RINGTONE_LIST_REFRESH = 1;
     
     private RRSettings settings;
@@ -54,64 +44,16 @@ public class RandomRingActivity extends Activity {
         
         settings = new RRSettings(this.getPreferences(MODE_PRIVATE));
         handler = new Handler(new RRCallback());
-
-        
-        testButton1 = (Button) findViewById(R.id.button1);
-        testButton2 = (Button) findViewById(R.id.button2);
-        testButton3 = (Button) findViewById(R.id.button3);
-        testButton4 = (Button) findViewById(R.id.button4);
-
-        testButton1.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
-				intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE);
-				intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "添加到铃声库中");
-				RandomRingActivity.this.startActivityForResult(intent, PICK_RINGTONE_REQUEST);
-				//接下来就是在onActivityResult()里接收判定了
-			}
-		});
-        testButton2.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this);
-				Toast.makeText(RandomRingActivity.this, util.getDefaultRingtoneTitle(), Toast.LENGTH_SHORT).show();
-			}
-		});
-        testButton3.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				Map<String, String> map = RRDBManager.get().getRingtones(RandomRingActivity.this);
-				
-				AlertDialog.Builder builder = new Builder(RandomRingActivity.this);
-				builder.setTitle("ALL that in the database:");
-				String message = "";
-				for (String s : map.keySet()) {
-					message += (s + ": " + map.get(s) + "  || ");
-				}
-				builder.setMessage(message);
-				
-				builder.create().show();
-			}
-		});
-        testButton4.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-				// TODO Auto-generated method stub
-				
-			}
-		});
         
         ringtoneListView = (ListView) findViewById(R.id.ringtoneListView);
         Message msg = Message.obtain(handler, RINGTONE_LIST_REFRESH);
         msg.sendToTarget();
     }
     
-	private void resetSongList() {
+    /**
+     * 当收到信号的时候刷新list
+     */
+	private void refreshRingtoneList() {
 		Map<String, String> ringtones = RRDBManager.get().getRingtones(this);
 		List<String> keys = new ArrayList<String>();
 		for (String s : ringtones.keySet()) {
@@ -127,9 +69,7 @@ public class RandomRingActivity extends Activity {
 			if (resultCode == RESULT_OK) {
 				Uri uri = data.getParcelableExtra(RingtoneManager.EXTRA_RINGTONE_PICKED_URI);
 				RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this);
-//				util.setRingtone(uri);
 				RRDBManager.get().insertRingtone(RandomRingActivity.this, util.getTitleByUri(uri), uri.toString());
-//				RRDBManager.get().deleteRingtone(RandomRingActivity.this, util.getTitleByUri(uri));
 				
 				Message msg = Message.obtain(handler, RINGTONE_LIST_REFRESH);
 				msg.sendToTarget();
@@ -154,12 +94,15 @@ public class RandomRingActivity extends Activity {
 		
 		@Override
 		public int getCount() {
-			return this.ringtones.size();
+			return this.ringtones.size() + 1;
 		}
 
 		@Override
 		public Object getItem(int position) {
-			return ringtones.get(position);
+			if (position < ringtones.size()) {
+				return ringtones.get(position);
+			}
+			return null;
 		}
 
 		@Override
@@ -172,19 +115,40 @@ public class RandomRingActivity extends Activity {
 			if (convertView != null) {
 				//据说这里要判断、要优化，不知道怎么确认老的view和新的view是同一种类型并且不需要重绘
 			}
-			convertView = LayoutInflater.from(context).inflate(R.layout.ringtone_item, null);
-			TextView nameText = (TextView) convertView.findViewById(R.id.ringtone_name);
-			ImageView deleteImage = (ImageView) convertView.findViewById(R.id.deleteImage);
-			nameText.setText(ringtones.get(position));
-			deleteImage.setOnClickListener(new OnClickListener() {
-				
-				@Override
-				public void onClick(View v) {
-					RRDBManager.get().deleteRingtone(context, ringtones.get(position));
-					Message msg = Message.obtain(handler, RINGTONE_LIST_REFRESH);
-					msg.sendToTarget();
-				}
-			});
+			
+			if (position < ringtones.size()) {
+				//正常的一个item
+				convertView = LayoutInflater.from(context).inflate(R.layout.ringtone_item, null);
+				TextView nameText = (TextView) convertView.findViewById(R.id.ringtone_name);
+				ImageView deleteImage = (ImageView) convertView.findViewById(R.id.deleteImage);
+				nameText.setText(ringtones.get(position));
+				deleteImage.setOnClickListener(new OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						RRDBManager.get().deleteRingtone(context, ringtones.get(position));
+						Message msg = Message.obtain(handler, RINGTONE_LIST_REFRESH);
+						msg.sendToTarget();
+					}
+				});
+			}
+			else {
+				//额外的，显示 + 符号
+				convertView = LayoutInflater.from(context).inflate(R.layout.ringtone_item_extra, null);
+				ImageView addImage = (ImageView) convertView.findViewById(R.id.addImageView);
+				addImage.setOnClickListener(new OnClickListener() {
+					
+					@Override
+					public void onClick(View v) {
+						//选取铃声
+						Intent intent = new Intent(RingtoneManager.ACTION_RINGTONE_PICKER);
+						intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_RINGTONE);
+						intent.putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, "添加到铃声库中");
+						RandomRingActivity.this.startActivityForResult(intent, PICK_RINGTONE_REQUEST);
+						//接下来就是在onActivityResult()里接收判定了
+					}
+				});
+			}
 			return convertView;
 		}
 	}
@@ -198,12 +162,12 @@ public class RandomRingActivity extends Activity {
 		@Override
 		public boolean handleMessage(Message msg) {
 			if (msg.what == RINGTONE_LIST_REFRESH) {
-				RandomRingActivity.this.resetSongList();
+				RandomRingActivity.this.refreshRingtoneList();
 				return true;
 			}
 			
 			return false;
 		}
-		
 	}
+
 }
