@@ -37,4 +37,13 @@
         android:layout_alignParentRight="true"
         android:text="Button" />
 
+    <ListView
+        android:id="@+id/ringtoneListView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true" 
+        android:padding="10dp">
+    </ListView>
+
 </RelativeLayout>
