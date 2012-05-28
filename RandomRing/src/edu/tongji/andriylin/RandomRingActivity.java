@@ -49,6 +49,7 @@ public class RandomRingActivity extends Activity {
     
     private Handler handler;
     private final Random random = new Random();
+    private RRSettings settings;
     
     private ListView ringtoneListView; 
     
@@ -59,15 +60,17 @@ public class RandomRingActivity extends Activity {
         setContentView(R.layout.main);
 
         handler = new Handler(new RRCallback());
+        settings = new RRSettings(this.getPreferences(MODE_PRIVATE));
         
         ringtoneListView = (ListView) findViewById(R.id.ringtoneListView);
         Message msg = Message.obtain(handler, RINGTONE_LIST_REFRESH);
         msg.sendToTarget();
-        
-		RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this, handler);
-		util.registerListener();
-		
-		this.showNotification(true);
+
+        if (settings.isRandomOn() == false) {
+    		RingtoneUtil util = new RingtoneUtil(RandomRingActivity.this, handler);
+    		util.registerListener();
+    		this.showNotification(true);
+		}
     }
     
     /**
@@ -172,9 +175,11 @@ public class RandomRingActivity extends Activity {
 
 	@Override
 	protected void onDestroy() {
-		RingtoneUtil util = new RingtoneUtil(this, handler);
-		util.unregisterListener();
-		this.showNotification(false);
+		if (settings.isRandomOn()) {
+			RingtoneUtil util = new RingtoneUtil(this, handler);
+			util.unregisterListener();
+			this.showNotification(false);
+		}
 
 		super.onDestroy();
 	}
